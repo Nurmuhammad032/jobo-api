@@ -11,7 +11,10 @@
     "strict": true,
     "baseUrl": "./src",
     "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "include": ["src/**/*"]
 }

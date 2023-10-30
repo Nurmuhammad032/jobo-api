@@ -8,3 +8,5 @@ const connectDb = async () => {
     console.log(`Error connecting to databse: ${error}`);
   }
 };
+
+export default connectDb;

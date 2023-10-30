@@ -1,22 +1,9 @@
-import mongoose, { InferSchemaType } from "mongoose";
+import mongoose, { InferSchemaType, Types } from "mongoose";
 
 const candidateSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  role: {
-    enum: ["candidate"],
-    type: String,
-    required: true,
+  user: {
+    type: Types.ObjectId,
+    ref: "User",
   },
   avatar: String,
   specialization: String,
@@ -33,9 +20,7 @@ const candidateSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  about: {
-    type: String,
-  },
+  about: String,
 });
 
 export type ICandidate = InferSchemaType<typeof candidateSchema>;

@@ -1,22 +1,9 @@
-import mongoose, { InferSchemaType } from "mongoose";
+import mongoose, { InferSchemaType, Types } from "mongoose";
 
 const employerSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  role: {
-    enum: ["employer"],
-    type: String,
-    required: true,
+  user: {
+    type: Types.ObjectId,
+    ref: "User",
   },
   avatar: {
     type: String,

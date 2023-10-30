@@ -1,11 +1,14 @@
+import "module-alias/register";
 import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import authRoute from "./routes/auth";
+import errorHandler from "@/middleware/errorHandler";
+import connectDb from "@/db/mongodb";
 dotenv.config();
 
 const app = express();
-
+connectDb();
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -14,6 +17,7 @@ app.get("/", (req, res) => {
 });
 app.use("/api/auth", authRoute);
 
+app.use(errorHandler);
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log("Server is running at " + PORT);
