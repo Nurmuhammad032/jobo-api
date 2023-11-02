@@ -7,7 +7,9 @@ const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  const statusCode = res.statusCode ? res.statusCode : 500;
+  const statusCode =
+    res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+  console.log("errror--------------", err.message);
   console.log("statusCode-------", statusCode);
   switch (statusCode) {
     case errorConstants.VALIDATION_ERROR:

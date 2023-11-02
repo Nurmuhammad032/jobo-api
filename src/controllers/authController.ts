@@ -1,11 +1,12 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response, json } from "express";
 import bcrypt from "bcryptjs";
 import asyncHandler from "express-async-handler";
 import Employer from "@/models/Employer";
-import { validationResult } from "express-validator";
+import { check, validationResult } from "express-validator";
 import generateToken from "@/utils/generateToken";
 import Candidate from "@/models/Candidate";
 import User, { IUser } from "@/models/User";
+import { employerValidator } from "@/validation/authValidator";
 
 /**
  * Register
@@ -13,64 +14,58 @@ import User, { IUser } from "@/models/User";
  * @access Public
  **/
 export const registerUser = asyncHandler(
-  async (req: Request<{}, {}, IUser>, res: Response) => {
-    try {
-      console.log("running or");
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(422).json({ status: false, errors: errors.array() });
-        return;
-      }
+  async (req: Request<{}, {}, IUser>, res: Response, next: NextFunction) => {
+    check("avatar").notEmpty().withMessage("Avatar is required");
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(422).json({ status: false, errors: errors.array() });
+      return;
+    }
 
-      const { email, password, role, ...others } = req.body;
+    const { email, password, role, ...others } = req.body;
+    const isExistEmail = await User.findOne({ email });
+    if (isExistEmail) {
+      res.status(400);
+      throw new Error("Email is already registered.");
+    }
 
-      const isExistEmail = await User.findOne({ email });
-      if (isExistEmail) {
-        res.status(400);
-        throw new Error("Email is already registered.");
-      }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      name: req.body.name,
+      email: req.body.email,
+      role: req.body.role,
+      password: hashedPassword,
+    });
 
-      const newUser = new User({
+    const savedUser = await newUser.save();
+
+    if (role === "employer") {
+      const newEmployer = new Employer({
+        user: savedUser._id,
         ...req.body,
-        password: hashedPassword,
+      });
+      const savedEmployer = await newEmployer.save();
+
+      res.json({
+        status: true,
+        message: "User created successfully",
+        data: savedEmployer,
+        token: generateToken(savedUser._id),
+      });
+    } else if (role === "candidate") {
+      const newCandidate = new Candidate({
+        user: savedUser._id,
+        ...others,
       });
 
-      const savedUser = await newUser.save();
-
-      if (role === "employer") {
-        const employerData = {
-          user: newUser._id,
-          ...others,
-        };
-
-        const newEmployer = new Employer(employerData);
-        res.json({
-          status: true,
-          message: "User created successfully",
-          data: newEmployer,
-          token: generateToken(savedUser._id),
-        });
-      } else if (role === "candidate") {
-        const candidateData = {
-          user: newUser._id,
-          ...others,
-        };
-
-        const newCandidate = Candidate.create(candidateData);
-
-        res.json({
-          status: true,
-          message: "User created successfully",
-          data: newCandidate,
-          token: generateToken(savedUser._id),
-        });
-      }
-    } catch (error) {
-      res
-        .status(500)
-        .json({ status: false, message: (error as Error).message });
+      const savedCandidate = await newCandidate.save();
+      res.json({
+        status: true,
+        message: "User created successfully",
+        data: savedCandidate,
+        token: generateToken(savedCandidate._id),
+      });
     }
   }
 );

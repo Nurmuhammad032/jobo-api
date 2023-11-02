@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { body, check } from "express-validator";
 
 export const employerValidator = [
-  // check("name", "Name is required").not().isEmpty(),
+  check("name", "Name is required").not().isEmpty(),
   check("email", "Email is required").not().isEmpty(),
   check("email", "Please enter a valid email address").isEmail(),
   check("password")
@@ -19,7 +19,6 @@ export const employerValidator = [
     .isEmpty()
     .isDate()
     .withMessage("Owned date must be a valid date"),
-  check("location", "Location is required").not().isEmpty(),
   check("address", "Address is required").not().isEmpty(),
 ];
 
@@ -37,7 +36,6 @@ const candidateValidator = [
     .withMessage("Your password must be at least 8 characters long"),
   check("role", "Role must be 'candidate'").equals("candidate"),
   check("birthday", "Birthday is required").not().isEmpty(),
-  check("location", "Location is required").not().isEmpty(),
   check("address", "Address is required").not().isEmpty(),
 ];
 
@@ -47,12 +45,18 @@ export const validateUser = (
   next: NextFunction
 ) => {
   const role = req.body.role;
+
   if (role === "employer") {
-    next(employerValidator);
+    // employerValidator.forEach((validation) => {
+    //   validation(req, res);
+    // });
   } else if (role === "candidate") {
-    // return candidateValidator;
+    candidateValidator.forEach((validation) => {
+      validation(req, res, next);
+    });
   } else {
     // Handle invalid or missing role
     res.status(400).json({ status: false, message: "Invalid user role" });
+    return;
   }
 };

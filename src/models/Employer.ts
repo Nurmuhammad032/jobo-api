@@ -12,10 +12,6 @@ const employerSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  location: {
-    type: String,
-    required: true,
-  },
   address: {
     type: String,
     required: true,
