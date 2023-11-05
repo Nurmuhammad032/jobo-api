@@ -1,9 +1,10 @@
 import "module-alias/register";
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
-import authRoute from "./routes/auth";
-import errorHandler from "@/middleware/errorHandler";
+import authRoute from "@/routes/auth";
+import userRoute from "@/routes/user";
+import { notFound, errorHandler } from "@/middleware/errorHandler";
 import connectDb from "@/db/mongodb";
 dotenv.config();
 
@@ -15,8 +16,11 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.json({ message: "Hello world" });
 });
-app.use("/api/auth", authRoute);
 
+app.use("/api/auth", authRoute);
+app.use("/api", userRoute);
+
+app.use(notFound);
 app.use(errorHandler);
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {

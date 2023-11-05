@@ -1,7 +1,13 @@
 import { errorConstants } from "@/constants";
 import { NextFunction, Request, Response } from "express";
 
-const errorHandler = (
+export const notFound = (req: Request, res: Response, next: NextFunction) => {
+  const error = new Error(`Not found - ${req.originalUrl}`);
+  res.status(404);
+  next(error);
+};
+
+export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
@@ -9,7 +15,6 @@ const errorHandler = (
 ) => {
   const statusCode =
     res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
-  console.log("errror--------------", err.message);
   console.log("statusCode-------", statusCode);
   switch (statusCode) {
     case errorConstants.VALIDATION_ERROR:
@@ -43,6 +48,7 @@ const errorHandler = (
         message: err.message,
         stackTrace: err.stack,
       });
+      break;
     case errorConstants.SERVER_ERROR:
       res.json({
         status: false,
@@ -56,5 +62,3 @@ const errorHandler = (
       break;
   }
 };
-
-export default errorHandler;

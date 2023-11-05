@@ -1,8 +1,14 @@
 import jwt from "jsonwebtoken";
 import { Types } from "mongoose";
 
-const generateToken = (id: Types.ObjectId) => {
-  return jwt.sign({ id }, process.env.JWT_SEC || "", {
+interface Payload {
+  id: Types.ObjectId;
+  email: string;
+  role: "employer" | "candidate";
+}
+
+const generateToken = ({ id, email, role }: Payload) => {
+  return jwt.sign({ id, email, role }, process.env.JWT_SEC || "", {
     expiresIn: "30d",
   });
 };

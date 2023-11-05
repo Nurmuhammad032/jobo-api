@@ -1,32 +1,40 @@
-import { NextFunction, Request, Response, json } from "express";
+import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import asyncHandler from "express-async-handler";
 import Employer from "@/models/Employer";
-import { check, validationResult } from "express-validator";
+import { validationResult } from "express-validator";
 import generateToken from "@/utils/generateToken";
 import Candidate from "@/models/Candidate";
 import User, { IUser } from "@/models/User";
-import { employerValidator } from "@/validation/authValidator";
 
-/**
- * Register
- * @route POST /api/auth/register
- * @access Public
- **/
-export const registerUser = asyncHandler(
-  async (req: Request<{}, {}, IUser>, res: Response, next: NextFunction) => {
-    check("avatar").notEmpty().withMessage("Avatar is required");
+enum UserRole {
+  Employer = "employer",
+  Candidate = "candidate",
+}
+
+interface ILoginBody {
+  email: string;
+  password: string;
+}
+
+const createUserAndAssociate = async (
+  req: Request<{}, {}, IUser>,
+  res: Response,
+  userRole: UserRole
+) => {
+  const { email, password, ...others } = req.body;
+
+  try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(422).json({ status: false, errors: errors.array() });
-      return;
+      return res.status(422).json({ status: false, errors: errors.array() });
     }
 
-    const { email, password, role, ...others } = req.body;
     const isExistEmail = await User.findOne({ email });
     if (isExistEmail) {
-      res.status(400);
-      throw new Error("Email is already registered.");
+      return res
+        .status(400)
+        .json({ status: false, message: "Email is already registered." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -34,39 +42,69 @@ export const registerUser = asyncHandler(
     const newUser = new User({
       name: req.body.name,
       email: req.body.email,
-      role: req.body.role,
+      role: userRole,
       password: hashedPassword,
     });
 
     const savedUser = await newUser.save();
 
-    if (role === "employer") {
-      const newEmployer = new Employer({
-        user: savedUser._id,
-        ...req.body,
-      });
-      const savedEmployer = await newEmployer.save();
+    const userData = {
+      user: savedUser._id,
+      ...others,
+    };
 
+    if (userRole === UserRole.Employer) {
+      const newEmployer = new Employer(userData);
+      const savedData = await newEmployer.save();
       res.json({
         status: true,
         message: "User created successfully",
-        data: savedEmployer,
-        token: generateToken(savedUser._id),
+        data: savedData,
+        token: generateToken({
+          id: savedUser._id,
+          email: savedUser.email,
+          role: savedUser.role,
+        }),
       });
-    } else if (role === "candidate") {
-      const newCandidate = new Candidate({
-        user: savedUser._id,
-        ...others,
-      });
-
-      const savedCandidate = await newCandidate.save();
+    } else if (userRole === UserRole.Candidate) {
+      const newCandidate = new Candidate(userData);
+      const savedData = await newCandidate.save();
       res.json({
         status: true,
         message: "User created successfully",
-        data: savedCandidate,
-        token: generateToken(savedCandidate._id),
+        data: savedData,
+        token: generateToken({
+          id: savedUser._id,
+          email: savedUser.email,
+          role: savedUser.role,
+        }),
       });
     }
+  } catch (error) {
+    res.status(500);
+    throw new Error((error as Error).message);
+  }
+};
+
+/**
+ * Register for employer
+ * @route POST /api/auth/register/employer
+ * @access Public
+ **/
+export const registerEmployer = asyncHandler(
+  async (req: Request<{}, {}, IUser>, res: Response) => {
+    createUserAndAssociate(req, res, UserRole.Employer);
+  }
+);
+
+/**
+ * Register for candidate
+ * @route POST /api/auth/register/candidate
+ * @access Public
+ **/
+export const registerCandidate = asyncHandler(
+  async (req: Request<{}, {}, IUser>, res: Response) => {
+    createUserAndAssociate(req, res, UserRole.Candidate);
   }
 );
 
@@ -75,6 +113,37 @@ export const registerUser = asyncHandler(
  * @route POST /api/auth/login
  * @access Public
  **/
-export const login = asyncHandler(async (req: Request, res: Response) => {
-  res.json({ message: "No errors!" });
-});
+export const login = asyncHandler(
+  async (req: Request<{}, {}, ILoginBody>, res: Response) => {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(401);
+      throw new Error("Email not found!");
+    }
+
+    const isPasswordMatched = await user.matchPassword(password);
+
+    if (isPasswordMatched) {
+      res.json({
+        status: true,
+        message: "You are now logged in",
+        data: {
+          name: user.name,
+          role: user.role,
+          email: user.email,
+        },
+        token: generateToken({
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        }),
+      });
+    } else {
+      res.status(401);
+      throw new Error("Password not found!");
+    }
+  }
+);

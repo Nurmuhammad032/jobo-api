@@ -1,4 +1,5 @@
 import mongoose, { InferSchemaType } from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -21,7 +22,13 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-export type IUser = InferSchemaType<typeof userSchema>;
+export interface IUser extends InferSchemaType<typeof userSchema> {
+  matchPassword(enteredPassword: string): Promise<boolean>;
+}
+
+userSchema.methods.matchPassword = async function (enteredPassword: string) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 const User = mongoose.model<IUser>("User", userSchema);
 

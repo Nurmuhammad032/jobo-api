@@ -1,11 +1,30 @@
-import { login, registerUser } from "@/controllers/authController";
-import { validateUser } from "@/validation/authValidator";
+import {
+  login,
+  registerCandidate,
+  registerEmployer,
+} from "@/controllers/authController";
+import { checkValidation } from "@/middleware/checkValidation";
+import {
+  employerValidator,
+  candidateValidator,
+  loginValidator,
+} from "@/validation/authValidator";
 import express from "express";
-import { body } from "express-validator";
 
 const router = express.Router();
-const val = [body("name").notEmpty()];
-router.post("/register", registerUser);
-router.post("/login", login);
+
+router.post(
+  "/register/employer",
+  employerValidator,
+  checkValidation,
+  registerEmployer
+);
+router.post(
+  "/register/candidate",
+  candidateValidator,
+  checkValidation,
+  registerCandidate
+);
+router.post("/login", loginValidator, checkValidation, login);
 
 export default router;

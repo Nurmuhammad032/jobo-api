@@ -21,6 +21,6 @@ const candidateSchema = new mongoose.Schema({
 
 export type ICandidate = InferSchemaType<typeof candidateSchema>;
 
-const Candidate = mongoose.model<ICandidate>("Candidate", candidateSchema);
+const Candidate = mongoose.model("Candidate", candidateSchema);
 
 export default Candidate;
