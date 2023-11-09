@@ -19,6 +19,7 @@ router.post(
   checkValidation,
   registerEmployer
 );
+
 router.post(
   "/register/candidate",
   candidateValidator,

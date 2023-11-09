@@ -25,11 +25,6 @@ const createUserAndAssociate = async (
   const { email, password, ...others } = req.body;
 
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ status: false, errors: errors.array() });
-    }
-
     const isExistEmail = await User.findOne({ email });
     if (isExistEmail) {
       return res
@@ -40,7 +35,6 @@ const createUserAndAssociate = async (
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      name: req.body.name,
       email: req.body.email,
       role: userRole,
       password: hashedPassword,
@@ -104,7 +98,32 @@ export const registerEmployer = asyncHandler(
  **/
 export const registerCandidate = asyncHandler(
   async (req: Request<{}, {}, IUser>, res: Response) => {
-    createUserAndAssociate(req, res, UserRole.Candidate);
+    const { email, password } = req.body;
+    const isExistEmail = await User.findOne({ email });
+    if (isExistEmail) {
+      res.status(400);
+      throw new Error("Email is already registered.");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      email: req.body.email,
+      role: "candidate",
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+    res.json({
+      status: true,
+      message: "User created successfully",
+      data: newUser,
+      token: generateToken({
+        id: newUser._id,
+        email: newUser.email,
+        role: newUser.role,
+      }),
+    });
   }
 );
 
@@ -131,7 +150,6 @@ export const login = asyncHandler(
         status: true,
         message: "You are now logged in",
         data: {
-          name: user.name,
           role: user.role,
           email: user.email,
         },
