@@ -5,18 +5,22 @@ const candidateSchema = new mongoose.Schema({
     type: Types.ObjectId,
     ref: "User",
   },
-  avatar: String,
-  specialization: String,
-  educationLevel: String,
-  birthday: {
-    type: Date,
-    required: true,
+  basicInfo: {
+    type: Types.ObjectId,
+    ref: "BasicInfo",
   },
-  address: {
-    type: String,
-    required: true,
-  },
-  about: String,
+  educations: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Education",
+    },
+  ],
+  experiences: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Experience",
+    },
+  ],
 });
 
 export type ICandidate = InferSchemaType<typeof candidateSchema>;

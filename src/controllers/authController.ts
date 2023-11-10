@@ -116,7 +116,7 @@ export const registerCandidate = asyncHandler(
     await newUser.save();
     res.json({
       status: true,
-      message: "User created successfully",
+      message: "Candidate created successfully",
       data: newUser,
       token: generateToken({
         id: newUser._id,

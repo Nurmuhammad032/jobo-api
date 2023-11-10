@@ -1,4 +1,5 @@
 import Candidate from "@/models/Candidate";
+import { IEducation } from "@/models/Education";
 import Employer from "@/models/Employer";
 import User from "@/models/User";
 import { Request, Response } from "express";
@@ -35,8 +36,42 @@ const fetchUserInformation = async <T>(
  **/
 export const getCandidateInfo = asyncHandler(
   async (req: Request, res: Response) => {
-    fetchUserInformation(req, res, Candidate);
+    const userId = req.user.id;
+    const user = await Candidate.findOne({ user: userId }).populate(
+      "basicInfo"
+    );
+
+    if (!user) {
+      res.status(404);
+      throw new Error("Candidate profile not found!`");
+    }
+
+    res.json({
+      status: true,
+      message: "Candidate information retrieved successfully.",
+      data: user,
+    });
   }
+);
+
+/**
+ * Create education
+ * @route POST /api/candidate/profile/education
+ * @access Private
+ **/
+export const createEducation = asyncHandler(
+  async (req: Request<{}, {}, IEducation>, res: Response) => {
+    const {} = req.body;
+  }
+);
+
+/**
+ * Create experience (employment)
+ * @route POST /api/candidate/profile/experience
+ * @access Private
+ **/
+export const createExperience = asyncHandler(
+  async (req: Request, res: Response) => {}
 );
 
 /**

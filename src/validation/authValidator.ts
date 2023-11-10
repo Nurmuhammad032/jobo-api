@@ -21,8 +21,23 @@ export const employerValidator = [
   body("address", "Address is required").not().isEmpty(),
 ];
 
+// export const candidateValidator = [
+//   body("name", "Name is required").not().isEmpty(),
+//   body("email", "Email is required").not().isEmpty(),
+//   body("email", "Please enter a valid email address").isEmail(),
+//   body("password")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Password is required")
+//     .isLength({
+//       min: 8,
+//     })
+//     .withMessage("Your password must be at least 8 characters long"),
+//   body("role", "Role must be 'candidate'").equals("candidate"),
+//   body("birthday", "Birthday is required").not().isEmpty(),
+//   body("address", "Address is required").not().isEmpty(),
+// ];
 export const candidateValidator = [
-  body("name", "Name is required").not().isEmpty(),
   body("email", "Email is required").not().isEmpty(),
   body("email", "Please enter a valid email address").isEmail(),
   body("password")
@@ -34,8 +49,6 @@ export const candidateValidator = [
     })
     .withMessage("Your password must be at least 8 characters long"),
   body("role", "Role must be 'candidate'").equals("candidate"),
-  body("birthday", "Birthday is required").not().isEmpty(),
-  body("address", "Address is required").not().isEmpty(),
 ];
 
 export const loginValidator = [
