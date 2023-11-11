@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import asyncHandler from "express-async-handler";
 import Employer from "@/models/Employer";
-import { validationResult } from "express-validator";
 import generateToken from "@/utils/generateToken";
 import Candidate from "@/models/Candidate";
 import User, { IUser } from "@/models/User";
-
+function excludePassword(_: any, ret: any) {
+  delete ret.password;
+}
 enum UserRole {
   Employer = "employer",
   Candidate = "candidate",
@@ -113,11 +114,13 @@ export const registerCandidate = asyncHandler(
       password: hashedPassword,
     });
 
-    await newUser.save();
+    const savedUser = await newUser.save();
+
+    await Candidate.create({ user: newUser.id });
     res.json({
       status: true,
       message: "Candidate created successfully",
-      data: newUser,
+      data: savedUser.toJSON({ transform: excludePassword }),
       token: generateToken({
         id: newUser._id,
         email: newUser.email,

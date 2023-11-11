@@ -1,33 +1,9 @@
 import Candidate from "@/models/Candidate";
-import { IEducation } from "@/models/Education";
-import Employer from "@/models/Employer";
-import User from "@/models/User";
+import Education, { IEducation } from "@/models/Education";
+import validateId from "@/utils/validateId";
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { Model } from "mongoose";
-
-const fetchUserInformation = async <T>(
-  req: Request,
-  res: Response,
-  Model: Model<T>
-) => {
-  const userId = req.user.id;
-  const user = await Model.findOne({ user: userId }).populate(
-    "user",
-    "-password"
-  );
-
-  if (!user) {
-    res.status(404);
-    throw new Error(`${Model.modelName} profile not found!`);
-  }
-
-  res.json({
-    status: true,
-    message: `${Model.modelName} information retrieved successfully.`,
-    data: user,
-  });
-};
+import { Types } from "mongoose";
 
 /**
  * Get candidate
@@ -38,7 +14,7 @@ export const getCandidateInfo = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user.id;
     const user = await Candidate.findOne({ user: userId }).populate(
-      "basicInfo"
+      "educations"
     );
 
     if (!user) {
@@ -46,13 +22,15 @@ export const getCandidateInfo = asyncHandler(
       throw new Error("Candidate profile not found!`");
     }
 
-    res.json({
+    res.status(201).json({
       status: true,
       message: "Candidate information retrieved successfully.",
       data: user,
     });
   }
 );
+
+// ============= Candidate education ============= //
 
 /**
  * Create education
@@ -61,10 +39,52 @@ export const getCandidateInfo = asyncHandler(
  **/
 export const createEducation = asyncHandler(
   async (req: Request<{}, {}, IEducation>, res: Response) => {
-    const {} = req.body;
+    const { candidateId, ...others } = req.body;
+    const newEducation = new Education({
+      candidate: candidateId,
+      ...others,
+    });
+
+    await newEducation.save();
+    await Candidate.findByIdAndUpdate(candidateId, {
+      $push: { educations: newEducation.id },
+    });
+
+    res.json({
+      status: true,
+      message: "Education created successfully!",
+      data: newEducation,
+    });
   }
 );
 
+export const updateEducation = asyncHandler(
+  async (req: Request<{ id: string }, {}, IEducation>, res: Response) => {
+    const educationId = req.params.id;
+    validateId(educationId, res);
+    const { candidateId, ...others } = req.body;
+    const education = await Education.findByIdAndUpdate(
+      educationId,
+      {
+        $set: others,
+      },
+      { new: true }
+    );
+
+    if (!education) {
+      res.status(500);
+      throw new Error("Failed to update education.");
+    }
+
+    res.json({
+      status: true,
+      message: "Education updated successfully!",
+      data: education,
+    });
+  }
+);
+
+// ============= Candidate experience ============= //
 /**
  * Create experience (employment)
  * @route POST /api/candidate/profile/experience
@@ -72,17 +92,6 @@ export const createEducation = asyncHandler(
  **/
 export const createExperience = asyncHandler(
   async (req: Request, res: Response) => {}
-);
-
-/**
- * Get employer
- * @route GET /api/employer/dashboard
- * @access Private
- **/
-export const getEmployerInfo = asyncHandler(
-  async (req: Request, res: Response) => {
-    fetchUserInformation(req, res, Employer);
-  }
 );
 
 /**
@@ -104,26 +113,6 @@ export const candidateUpdate = asyncHandler(
       status: true,
       message: "Candidate information updated successfully.",
       data: candidate,
-    });
-  }
-);
-
-/**
- * Update employer
- * @route PUT /api/employer/update
- * @access Private
- **/
-export const employerUpdate = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { name, email, password, role, ...others } = req.body;
-    const userId = req.user.id;
-    const employer = await Employer.findOneAndUpdate({ user: userId }, others, {
-      new: true,
-    }).populate("user", "-password");
-    res.json({
-      status: true,
-      message: "Employer information updated successfully.",
-      data: employer,
     });
   }
 );

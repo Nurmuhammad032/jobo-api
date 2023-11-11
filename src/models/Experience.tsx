@@ -1,6 +1,12 @@
 import mongoose, { InferSchemaType, Types } from "mongoose";
 
 const experienceSchema = new mongoose.Schema({
+  candidate: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Candidate",
+    required: true,
+    immutable: true,
+  },
   position: {
     type: String,
     required: true,

@@ -14,14 +14,14 @@ import express from "express";
 const router = express.Router();
 
 router.post(
-  "/register/employer",
+  "/register-employer",
   employerValidator,
   checkValidation,
   registerEmployer
 );
 
 router.post(
-  "/register/candidate",
+  "/register-candidate",
   candidateValidator,
   checkValidation,
   registerCandidate

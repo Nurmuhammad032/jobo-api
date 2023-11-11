@@ -4,6 +4,8 @@ const candidateSchema = new mongoose.Schema({
   user: {
     type: Types.ObjectId,
     ref: "User",
+    required: true,
+    immutable: true,
   },
   basicInfo: {
     type: Types.ObjectId,

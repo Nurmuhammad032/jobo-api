@@ -6,7 +6,9 @@ export const checkValidation = (
   res: Response,
   next: NextFunction
 ) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req).formatWith(({ msg }) => ({
+    message: msg,
+  }));
   if (!errors.isEmpty()) {
     res.status(422).json({ status: false, errors: errors.array() });
     return;
