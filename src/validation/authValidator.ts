@@ -48,7 +48,6 @@ export const candidateValidator = [
       min: 8,
     })
     .withMessage("Your password must be at least 8 characters long"),
-  body("role", "Role must be 'candidate'").equals("candidate"),
 ];
 
 export const loginValidator = [
