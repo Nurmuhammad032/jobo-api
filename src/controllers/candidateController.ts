@@ -1,9 +1,11 @@
 import Candidate from "@/models/Candidate";
 import Education, { IEducation } from "@/models/Education";
+import { getCandidateByUserId } from "@/utils/getCandidateById";
 import validateId from "@/utils/validateId";
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { Types } from "mongoose";
+
+// ============= Candidate education ============= //
 
 /**
  * Get candidate
@@ -30,8 +32,6 @@ export const getCandidateInfo = asyncHandler(
   }
 );
 
-// ============= Candidate education ============= //
-
 /**
  * Create education
  * @route POST /api/candidate/profile/education
@@ -39,14 +39,15 @@ export const getCandidateInfo = asyncHandler(
  **/
 export const createEducation = asyncHandler(
   async (req: Request<{}, {}, IEducation>, res: Response) => {
-    const { candidateId, ...others } = req.body;
+    const userId = req.user.id;
+    const candidate = await getCandidateByUserId(userId, res, Candidate);
     const newEducation = new Education({
-      candidate: candidateId,
-      ...others,
+      candidate: candidate.id,
+      ...req.body,
     });
 
     await newEducation.save();
-    await Candidate.findByIdAndUpdate(candidateId, {
+    await Candidate.findByIdAndUpdate(candidate.id, {
       $push: { educations: newEducation.id },
     });
 
@@ -58,20 +59,28 @@ export const createEducation = asyncHandler(
   }
 );
 
+/**
+ * Update education by id
+ * @route POST /api/candidate/profile/education/:id
+ * @access Private
+ **/
 export const updateEducation = asyncHandler(
   async (req: Request<{ id: string }, {}, IEducation>, res: Response) => {
     const educationId = req.params.id;
     validateId(educationId, res);
-    const { candidateId, ...others } = req.body;
-    const education = await Education.findByIdAndUpdate(
-      educationId,
+    const userId = req.user.id;
+    const candidate = await getCandidateByUserId(userId, res, Candidate);
+
+    const updatedEducation = await Education.findOneAndUpdate(
       {
-        $set: others,
+        _id: educationId,
+        candidate: candidate.id,
       },
+      req.body,
       { new: true }
     );
 
-    if (!education) {
+    if (!updatedEducation) {
       res.status(500);
       throw new Error("Failed to update education.");
     }
@@ -79,7 +88,7 @@ export const updateEducation = asyncHandler(
     res.json({
       status: true,
       message: "Education updated successfully!",
-      data: education,
+      data: updatedEducation,
     });
   }
 );

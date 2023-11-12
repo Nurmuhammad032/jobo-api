@@ -19,13 +19,13 @@ const educationSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  currentEducate: {
-    type: Boolean,
-    default: false,
-  },
   endDate: {
     type: Date,
     default: null,
+  },
+  currentEducate: {
+    type: Boolean,
+    default: false,
   },
   description: {
     type: String,
@@ -34,9 +34,7 @@ const educationSchema = new mongoose.Schema({
 });
 
 type IEducationSchema = InferSchemaType<typeof educationSchema>;
-export interface IEducation extends Omit<IEducationSchema, "candidate"> {
-  candidateId: string;
-}
+export type IEducation = Omit<IEducationSchema, "candidate">;
 
 const Education = mongoose.model<IEducation>("Education", educationSchema);
 

@@ -8,15 +8,6 @@ export const candidateValidator = [
 ];
 
 export const educationValidator = [
-  body("candidateId")
-    .notEmpty()
-    .withMessage("Candidate id is required.")
-    .custom((value) => {
-      if (!Types.ObjectId.isValid(value)) {
-        throw new Error("Please provide a valid candidate id.");
-      }
-      return true; // Indicates the success of the custom validation
-    }),
   body("school", "School name is required").notEmpty(),
   body("degree", "degree is required").notEmpty(),
   body("startDate", "Start date is required")
